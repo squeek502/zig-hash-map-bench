@@ -4,11 +4,9 @@ const Timer = time.Timer;
 const hash_map = std.hash_map;
 
 var timer: Timer = undefined;
-var stdout: *std.io.OutStream(std.os.WriteError) = undefined;
 
 pub fn main() !void {
-    const stdout_file = try std.io.getStdOut();
-    stdout = &(stdout_file.outStream().stream);
+    const stdout = std.io.getStdOut().outStream();
     timer = try Timer.start();
 
     var allocator = std.heap.c_allocator;
@@ -16,14 +14,13 @@ pub fn main() !void {
 
     var numInsertions: usize = 1;
     var maxInsertions: usize = 10 * 1000 * 1000;
-    try stdout.print("num_elements,nanoseconds_per_element\n");
+    try stdout.print("num_elements,nanoseconds_per_element\n", .{});
     while (numInsertions < maxInsertions) {
-
         var fastest: u64 = std.math.maxInt(u64);
 
         var i: usize = 0;
         const numAttempts = 5;
-        while (i < numAttempts) : (i+=1) {
+        while (i < numAttempts) : (i += 1) {
             var map = hash_map.AutoHashMap(i32, i32).init(allocator);
             defer map.deinit();
             var r = std.rand.DefaultPrng.init(213);
@@ -40,7 +37,7 @@ pub fn main() !void {
             }
         }
 
-        try stdout.print("{},{}\n", numInsertions, fastest);
+        try stdout.print("{},{}\n", .{ numInsertions, fastest });
         numInsertions = nextInterval(numInsertions);
     }
 }
@@ -55,5 +52,5 @@ fn endMeasure(iterations: usize) u64 {
 }
 
 fn nextInterval(x: usize) usize {
-    return @floatToInt(usize, @intToFloat(f64, x+1) * 1.25);
+    return @floatToInt(usize, @intToFloat(f64, x + 1) * 1.25);
 }
