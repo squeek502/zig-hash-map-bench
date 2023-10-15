@@ -13,7 +13,11 @@ Based loosely on some of the benchmarking of C++ hash map implementations here:
 Insertion without ensureCapacity:
 
 ```
-zig run insert.zig --release-fast --library c
+zig run insert.zig -OReleaseFast -lc
+```
+
+```
+zig run insert-strings.zig -OReleaseFast -lc
 ```
 
 Output will be in the format:

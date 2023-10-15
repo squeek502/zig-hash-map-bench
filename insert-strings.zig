@@ -6,11 +6,10 @@ const hash_map = std.hash_map;
 var timer: Timer = undefined;
 
 pub fn main() !void {
-    const stdout = std.io.getStdOut().outStream();
+    const stdout = std.io.getStdOut().writer();
     timer = try Timer.start();
 
     var allocator = std.heap.c_allocator;
-    var result: u64 = 0;
     const buf_size = 256;
     var buf: [buf_size]u8 = undefined;
 
@@ -26,16 +25,18 @@ pub fn main() !void {
             var map = hash_map.StringHashMap(i32).init(allocator);
             defer map.deinit();
             var r = std.rand.DefaultPrng.init(213);
+            const rand = r.random();
 
             // Allocate all the strings upfront so the allocation doesn't get included in the benchmark
-            var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-            defer arena.deinit();
-            var strings: [][]const u8 = try arena.allocator.alloc([]const u8, numInsertions);
+            var arena_state = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+            defer arena_state.deinit();
+            const arena = arena_state.allocator();
+            var strings: [][]const u8 = try arena.alloc([]const u8, numInsertions);
             var n: usize = 0;
             while (n < numInsertions) : (n += 1) {
-                r.random.bytes(&buf);
-                const end_i = r.random.intRangeLessThan(usize, 1, buf_size);
-                const str = try arena.allocator.dupe(u8, buf[0..end_i]);
+                rand.bytes(&buf);
+                const end_i = rand.intRangeLessThan(usize, 1, buf_size);
+                const str = try arena.dupe(u8, buf[0..end_i]);
                 strings[n] = str;
             }
 
@@ -66,5 +67,5 @@ fn endMeasure(iterations: usize) u64 {
 }
 
 fn nextInterval(x: usize) usize {
-    return @floatToInt(usize, @intToFloat(f64, x + 1) * 1.25);
+    return @as(usize, @intFromFloat(@as(f64, @floatFromInt(x + 1)) * 1.25));
 }

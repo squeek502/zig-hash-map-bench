@@ -6,11 +6,10 @@ const hash_map = std.hash_map;
 var timer: Timer = undefined;
 
 pub fn main() !void {
-    const stdout = std.io.getStdOut().outStream();
+    const stdout = std.io.getStdOut().writer();
     timer = try Timer.start();
 
     var allocator = std.heap.c_allocator;
-    var result: u64 = 0;
 
     var numInsertions: usize = 1;
     var maxInsertions: usize = 10 * 1000 * 1000;
@@ -24,11 +23,12 @@ pub fn main() !void {
             var map = hash_map.AutoHashMap(i32, i32).init(allocator);
             defer map.deinit();
             var r = std.rand.DefaultPrng.init(213);
+            const rand = r.random();
 
             beginMeasure();
             var n: usize = 0;
             while (n < numInsertions) : (n += 1) {
-                _ = try map.put(r.random.int(i32), undefined);
+                _ = try map.put(rand.int(i32), undefined);
             }
             const ns_per_element = endMeasure(numInsertions);
 
@@ -52,5 +52,5 @@ fn endMeasure(iterations: usize) u64 {
 }
 
 fn nextInterval(x: usize) usize {
-    return @floatToInt(usize, @intToFloat(f64, x + 1) * 1.25);
+    return @as(usize, @intFromFloat(@as(f64, @floatFromInt(x + 1)) * 1.25));
 }
